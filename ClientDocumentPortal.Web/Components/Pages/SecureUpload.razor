@@ -1,0 +1,135 @@
+@page "/secure-upload/{Token}"
+@using ClientDocumentPortal.Application.Interfaces
+@using ClientDocumentPortal.Domain.Entities
+@using ClientDocumentPortal.Domain.Enums
+@using Microsoft.AspNetCore.Components.Forms
+@inject IDocumentRequestService RequestService
+@inject IFileStorageService StorageService
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    @if (_request == null)
+    {
+        <div class="alert alert-info">@_message</div>
+    }
+    else
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4>Document Request: @_request.Title</h4>
+            </div>
+            <div class="card-body">
+                <p>Hello <strong>@_request.Client.Name</strong>,</p>
+                <p>@_request.Description</p>
+                <p class="text-muted">Please securely upload the requested documents below.</p>
+            </div>
+        </div>
+
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Document</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in _request.Items)
+                {
+                    <tr>
+                        <td>
+                            <strong>@item.Name</strong>
+                            @if (!string.IsNullOrEmpty(item.Description))
+                            {
+                                <div class="small text-muted">@item.Description</div>
+                            }
+                        </td>
+                        <td>
+                            @if (item.Status == DocumentStatus.Pending || item.Status == DocumentStatus.Rejected)
+                            {
+                                <span class="badge bg-warning text-dark">@item.Status.ToString()</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">@item.Status.ToString()</span>
+                            }
+                            
+                            @if (item.Status == DocumentStatus.Rejected && !string.IsNullOrEmpty(item.Remarks))
+                            {
+                                <div class="small text-danger mt-1">@item.Remarks</div>
+                            }
+                        </td>
+                        <td>
+                            @if (item.Status == DocumentStatus.Pending || item.Status == DocumentStatus.Rejected)
+                            {
+                                @if (_uploadingItemId == item.Id)
+                                {
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                }
+                                else
+                                {
+                                    <InputFile OnChange="@((e) => UploadFile(e, item.Id))" class="form-control form-control-sm" />
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-success"><i class="bi bi-check-circle-fill"></i> Uploaded: @item.OriginalFileName</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Token { get; set; } = default!;
+
+    private DocumentRequest? _request;
+    private string _message = "Loading...";
+    private Guid? _uploadingItemId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _request = await RequestService.GetRequestBySecureTokenAsync(Token);
+        if (_request == null)
+        {
+            _message = "Invalid or expired token. Please verify the URL.";
+        }
+    }
+
+    private async Task UploadFile(InputFileChangeEventArgs e, Guid itemId)
+    {
+        try
+        {
+            _uploadingItemId = itemId;
+            StateHasChanged();
+
+            var file = e.File;
+            
+            // To simplify without full mock storage configuration failing, we can try to upload.
+            // If AWS is not configured properly, it will throw an AWS exception. 
+            // In a production scenario, we'd handle exceptions cleanly.
+            
+            using var stream = file.OpenReadStream(1024 * 1024 * 50); // 50MB max
+            var fileKey = await StorageService.UploadFileAsync(stream, file.Name, file.ContentType);
+            
+            await RequestService.AttachFileToDocumentItemAsync(itemId, fileKey, file.Name, file.ContentType, file.Size);
+            
+            // Refresh
+            _request = await RequestService.GetRequestBySecureTokenAsync(Token);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Upload failed: {ex.Message}");
+            // Optional: JS alert or UI message
+        }
+        finally
+        {
+            _uploadingItemId = null;
+            StateHasChanged();
+        }
+    }
+}

@@ -1,0 +1,57 @@
+@page "/login"
+@using Microsoft.AspNetCore.Identity
+@using ClientDocumentPortal.Domain.Entities
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager NavigationManager
+
+<h3>Login</h3>
+
+<div class="row">
+    <div class="col-md-6">
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div class="alert alert-danger">@_errorMessage</div>
+        }
+
+        <EditForm Model="Model" OnValidSubmit="LoginUser" FormName="LoginForm">
+            <DataAnnotationsValidator />
+            
+            <div class="mb-3">
+                <label>Email</label>
+                <InputText @bind-Value="Model.Email" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label>Password</label>
+                <InputText @bind-Value="Model.Password" type="password" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    public LoginViewModel Model { get; set; } = new();
+
+    private string? _errorMessage;
+
+    private async Task LoginUser()
+    {
+        var result = await SignInManager.PasswordSignInAsync(Model.Email, Model.Password, isPersistent: true, lockoutOnFailure: false);
+        
+        if (result.Succeeded)
+        {
+            NavigationManager.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            _errorMessage = "Invalid login attempt.";
+        }
+    }
+
+    public class LoginViewModel
+    {
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
+    }
+}

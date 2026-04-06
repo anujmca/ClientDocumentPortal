@@ -1,0 +1,130 @@
+@page "/clients"
+@using ClientDocumentPortal.Application.Interfaces
+@using ClientDocumentPortal.Domain.Entities
+@inject IClientService ClientService
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<h3>Clients</h3>
+
+<button class="btn btn-success mb-3" @onclick="ShowAddForm">Add Client</button>
+
+@if (_showForm)
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>@(_isEditing ? "Edit Client" : "New Client")</h5>
+            <EditForm Model="_model" OnValidSubmit="SaveClient">
+                <div class="mb-2">
+                    <label>Name</label>
+                    <InputText @bind-Value="_model.Name" class="form-control" required />
+                </div>
+                <div class="mb-2">
+                    <label>Email</label>
+                    <InputText @bind-Value="_model.Email" class="form-control" required type="email" />
+                </div>
+                <div class="mb-2">
+                    <label>Phone</label>
+                    <InputText @bind-Value="_model.Phone" class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-secondary" @onclick="() => _showForm = false">Cancel</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (_clients == null)
+        {
+            <tr><td colspan="4">Loading...</td></tr>
+        }
+        else if (!_clients.Any())
+        {
+            <tr><td colspan="4">No clients found.</td></tr>
+        }
+        else
+        {
+            @foreach (var client in _clients)
+            {
+                <tr>
+                    <td>@client.Name</td>
+                    <td>@client.Email</td>
+                    <td>@client.Phone</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" @onclick="() => EditClient(client)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteClient(client.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Client>? _clients;
+    private bool _showForm;
+    private bool _isEditing;
+    private ClientModel _model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadClients();
+    }
+
+    private async Task LoadClients()
+    {
+        _clients = await ClientService.GetClientsAsync();
+    }
+
+    private void ShowAddForm()
+    {
+        _model = new ClientModel();
+        _isEditing = false;
+        _showForm = true;
+    }
+
+    private void EditClient(Client client)
+    {
+        _model = new ClientModel { Id = client.Id, Name = client.Name, Email = client.Email, Phone = client.Phone };
+        _isEditing = true;
+        _showForm = true;
+    }
+
+    private async Task SaveClient()
+    {
+        if (_isEditing)
+        {
+            await ClientService.UpdateClientAsync(_model.Id, _model.Name, _model.Email, _model.Phone, null);
+        }
+        else
+        {
+            await ClientService.CreateClientAsync(_model.Name, _model.Email, _model.Phone, null);
+        }
+        _showForm = false;
+        await LoadClients();
+    }
+
+    private async Task DeleteClient(Guid id)
+    {
+        await ClientService.DeleteClientAsync(id);
+        await LoadClients();
+    }
+
+    public class ClientModel
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string? Phone { get; set; }
+    }
+}

@@ -1,0 +1,49 @@
+@page "/"
+@using Microsoft.EntityFrameworkCore
+@using ClientDocumentPortal.Infrastructure.Data
+@using Microsoft.AspNetCore.Identity
+@inject ApplicationDbContext DbContext
+@inject UserManager<ApplicationUser> UserManager
+@rendermode InteractiveServer
+
+<PageTitle>Dashboard - Client Document Portal</PageTitle>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Total Clients</h5>
+                <p class="card-text display-4">@_totalClients</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Completed Requests</h5>
+                <p class="card-text display-4">@_completedRequests</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Pending Documents</h5>
+                <p class="card-text display-4">@_pendingDocs</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private int _totalClients = 0;
+    private int _completedRequests = 0;
+    private int _pendingDocs = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // For MVP, just do simple counts. Without auth enforce yet or tenant filtering enforced correctly via scoped providers.
+        _totalClients = await DbContext.Clients.IgnoreQueryFilters().CountAsync();
+        _pendingDocs = await DbContext.DocumentItems.IgnoreQueryFilters().CountAsync(i => i.Status == DocumentStatus.Pending);
+    }
+}

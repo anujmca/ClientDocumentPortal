@@ -1,0 +1,67 @@
+@page "/setup"
+@using Microsoft.EntityFrameworkCore
+@using ClientDocumentPortal.Infrastructure.Data
+@using ClientDocumentPortal.Domain.Entities
+@using Microsoft.AspNetCore.Identity
+@inject ApplicationDbContext DbContext
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager Nav
+
+<h3>Setup Demo Data</h3>
+
+<button class="btn btn-primary" @onclick="CreateDemoData">Create Initial Data</button>
+
+@if (_message != null)
+{
+    <div class="alert alert-info mt-3">@_message</div>
+}
+
+@code {
+    private string? _message;
+
+    private async Task CreateDemoData()
+    {
+        try
+        {
+            await DbContext.Database.MigrateAsync();
+
+            if (!await DbContext.Tenants.AnyAsync())
+            {
+                var tenant = new Tenant { Name = "Acme CPAs", IsActive = true };
+                DbContext.Tenants.Add(tenant);
+                await DbContext.SaveChangesAsync();
+
+                var user = new ApplicationUser
+                {
+                    UserName = "admin@acmecpa.com",
+                    Email = "admin@acmecpa.com",
+                    FirstName = "Admin",
+                    LastName = "User",
+                    TenantId = tenant.Id,
+                    EmailConfirmed = true
+                };
+
+                await UserManager.CreateAsync(user, "Password123!");
+
+                var client = new Client
+                {
+                    TenantId = tenant.Id,
+                    Name = "John Doe",
+                    Email = "johndoe@example.com"
+                };
+                DbContext.Clients.Add(client);
+                await DbContext.SaveChangesAsync();
+
+                _message = "Demo Data generated successfully! You can login with admin@acmecpa.com / Password123!";
+            }
+            else
+            {
+                _message = "Demo Data already exists.";
+            }
+        }
+        catch(Exception ex)
+        {
+            _message = "Error: " + ex.Message;
+        }
+    }
+}

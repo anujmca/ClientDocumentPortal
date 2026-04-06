@@ -1,0 +1,15 @@
+C:\Users\anujm\.gemini\antigravity\scratch\ClientDocumentPortal\ClientDocumentPortal.Application\bin\Debug\net8.0\ClientDocumentPortal.Application.deps.json
+C:\Users\anujm\.gemini\antigravity\scratch\ClientDocumentPortal\ClientDocumentPortal.Application\bin\Debug\net8.0\ClientDocumentPortal.Application.dll
+C:\Users\anujm\.gemini\antigravity\scratch\ClientDocumentPortal\ClientDocumentPortal.Application\bin\Debug\net8.0\ClientDocumentPortal.Application.pdb
+C:\Users\anujm\.gemini\antigravity\scratch\ClientDocumentPortal\ClientDocumentPortal.Application\bin\Debug\net8.0\ClientDocumentPortal.Domain.dll
+C:\Users\anujm\.gemini\antigravity\scratch\ClientDocumentPortal\ClientDocumentPortal.Application\bin\Debug\net8.0\ClientDocumentPortal.Domain.pdb
+C:\Users\anujm\.gemini\antigravity\scratch\ClientDocumentPortal\ClientDocumentPortal.Application\obj\Debug\net8.0\ClientDocumentPortal.Application.csproj.AssemblyReference.cache
+C:\Users\anujm\.gemini\antigravity\scratch\ClientDocumentPortal\ClientDocumentPortal.Application\obj\Debug\net8.0\ClientDocumentPortal.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\anujm\.gemini\antigravity\scratch\ClientDocumentPortal\ClientDocumentPortal.Application\obj\Debug\net8.0\ClientDocumentPortal.Application.AssemblyInfoInputs.cache
+C:\Users\anujm\.gemini\antigravity\scratch\ClientDocumentPortal\ClientDocumentPortal.Application\obj\Debug\net8.0\ClientDocumentPortal.Application.AssemblyInfo.cs
+C:\Users\anujm\.gemini\antigravity\scratch\ClientDocumentPortal\ClientDocumentPortal.Application\obj\Debug\net8.0\ClientDocumentPortal.Application.csproj.CoreCompileInputs.cache
+C:\Users\anujm\.gemini\antigravity\scratch\ClientDocumentPortal\ClientDocumentPortal.Application\obj\Debug\net8.0\ClientDo.E5DA7D7F.Up2Date
+C:\Users\anujm\.gemini\antigravity\scratch\ClientDocumentPortal\ClientDocumentPortal.Application\obj\Debug\net8.0\ClientDocumentPortal.Application.dll
+C:\Users\anujm\.gemini\antigravity\scratch\ClientDocumentPortal\ClientDocumentPortal.Application\obj\Debug\net8.0\refint\ClientDocumentPortal.Application.dll
+C:\Users\anujm\.gemini\antigravity\scratch\ClientDocumentPortal\ClientDocumentPortal.Application\obj\Debug\net8.0\ClientDocumentPortal.Application.pdb
+C:\Users\anujm\.gemini\antigravity\scratch\ClientDocumentPortal\ClientDocumentPortal.Application\obj\Debug\net8.0\ref\ClientDocumentPortal.Application.dll

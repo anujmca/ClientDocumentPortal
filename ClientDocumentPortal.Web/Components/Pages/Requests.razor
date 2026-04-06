@@ -1,0 +1,148 @@
+@page "/requests"
+@using ClientDocumentPortal.Application.Interfaces
+@using ClientDocumentPortal.Domain.Entities
+@inject IDocumentRequestService RequestService
+@inject IClientService ClientService
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<h3>Document Requests</h3>
+
+<button class="btn btn-success mb-3" @onclick="ShowAddForm">New Request</button>
+
+@if (_showForm)
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>New Document Request</h5>
+            <EditForm Model="_model" OnValidSubmit="SaveRequest">
+                <div class="mb-2">
+                    <label>Client</label>
+                    <InputSelect @bind-Value="_model.ClientId" class="form-control" required>
+                        <option value="">-- Select Client --</option>
+                        @if (_clients != null)
+                        {
+                            @foreach (var c in _clients)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        }
+                    </InputSelect>
+                </div>
+                <div class="mb-2">
+                    <label>Title</label>
+                    <InputText @bind-Value="_model.Title" class="form-control" required />
+                </div>
+                <div class="mb-2">
+                    <label>Description</label>
+                    <InputTextArea @bind-Value="_model.Description" class="form-control" />
+                </div>
+                <div class="mb-2">
+                    <label>Requested Documents (comma separated)</label>
+                    <InputText @bind-Value="_model.DocumentNamesRaw" class="form-control" required />
+                    <small class="form-text text-muted">e.g. Identity Proof, Tax Return 2024, Bank Statement</small>
+                </div>
+                <button type="submit" class="btn btn-primary">Create</button>
+                <button type="button" class="btn btn-secondary" @onclick="() => _showForm = false">Cancel</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Client</th>
+            <th>Title</th>
+            <th>Items</th>
+            <th>Public Link</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (_requests == null)
+        {
+            <tr><td colspan="5">Loading...</td></tr>
+        }
+        else if (!_requests.Any())
+        {
+            <tr><td colspan="5">No requests found.</td></tr>
+        }
+        else
+        {
+            @foreach (var req in _requests)
+            {
+                <tr>
+                    <td>@(req.Client?.Name)</td>
+                    <td>@req.Title</td>
+                    <td>
+                        @req.Items.Count(i => i.Status == ClientDocumentPortal.Domain.Enums.DocumentStatus.Uploaded || i.Status == ClientDocumentPortal.Domain.Enums.DocumentStatus.Approved) 
+                        / @req.Items.Count() Completed
+                    </td>
+                    <td>
+                        <a href="/secure-upload/@req.SecureToken" target="_blank" class="btn btn-sm btn-outline-info">Copy/View Link</a>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-info" @onclick="() => ViewDetails(req.Id)">View Details</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<DocumentRequest>? _requests;
+    private List<Client>? _clients;
+    private bool _showForm;
+    private RequestModel _model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _clients = await ClientService.GetClientsAsync();
+        
+        // For simplicity, retrieving all requests across all clients by leveraging ef core context directly or querying one by one.
+        // Actually, we need an endpoint to get ALL requests for the tenant. Let's just fetch them per client for now if few, 
+        // to avoid writing an extra query, but let's just make it simple: 
+        _requests = new List<DocumentRequest>();
+        foreach (var c in _clients)
+        {
+            _requests.AddRange(await RequestService.GetRequestsByClientAsync(c.Id));
+        }
+        _requests = _requests.OrderByDescending(r => r.CreatedAt).ToList();
+    }
+
+    private void ShowAddForm()
+    {
+        _model = new RequestModel();
+        _showForm = true;
+    }
+
+    private async Task SaveRequest()
+    {
+        var docNames = _model.DocumentNamesRaw.Split(',')
+            .Select(x => x.Trim()).Where(x => !string.IsNullOrEmpty(x)).ToList();
+            
+        await RequestService.CreateRequestAsync(_model.ClientId, _model.Title, _model.Description, docNames);
+        _showForm = false;
+        await LoadData();
+    }
+
+    private void ViewDetails(Guid id)
+    {
+        // Route to a details page (not implemented in this simplified view yet, so we just reload or show alert)
+    }
+
+    public class RequestModel
+    {
+        public Guid ClientId { get; set; }
+        public string Title { get; set; } = "";
+        public string? Description { get; set; }
+        public string DocumentNamesRaw { get; set; } = "";
+    }
+}
