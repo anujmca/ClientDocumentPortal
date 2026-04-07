@@ -1,0 +1,42 @@
+@page "/debug-claims"
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthStateProvider
+@attribute [Authorize]
+
+<h3>Debug Claims</h3>
+
+<div class="card">
+    <div class="card-body">
+        <h5>Current User: @_userName</h5>
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var claim in _claims)
+                {
+                    <tr>
+                        <td>@claim.Type</td>
+                        <td>@claim.Value</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private string? _userName;
+    private List<Claim> _claims = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        _userName = user.Identity?.Name;
+        _claims = user.Claims.ToList();
+    }
+}

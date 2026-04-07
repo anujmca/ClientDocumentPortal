@@ -1,0 +1,37 @@
+@using ClientDocumentPortal.Application.Interfaces
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ITenantProvider TenantProvider
+@using Microsoft.Extensions.Logging
+@inject ILogger<TenantInitializer> Logger
+
+@ChildContent
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var tenantIdClaim = user.FindFirst("tenant_id")?.Value;
+            Logger.LogInformation($"TenantInitializer: User authenticated. TenantId Claim: {tenantIdClaim}");
+            
+            if (Guid.TryParse(tenantIdClaim, out var tenantId))
+            {
+                TenantProvider.SetTenantId(tenantId);
+                Logger.LogInformation($"TenantInitializer: Tenant context set to {tenantId}");
+            }
+            else
+            {
+                Logger.LogWarning("TenantInitializer: User authenticated but tenant_id claim is missing or invalid.");
+            }
+        }
+        else
+        {
+            Logger.LogInformation("TenantInitializer: User not authenticated.");
+        }
+    }
+}

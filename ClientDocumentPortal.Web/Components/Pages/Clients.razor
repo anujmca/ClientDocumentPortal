@@ -2,6 +2,7 @@
 @using ClientDocumentPortal.Application.Interfaces
 @using ClientDocumentPortal.Domain.Entities
 @inject IClientService ClientService
+@inject IUserService UserService
 @attribute [Authorize]
 @rendermode InteractiveServer
 
@@ -11,7 +12,7 @@
 
 @if (_showForm)
 {
-    <div class="card mb-4">
+    <div class="card mb-4 border-primary">
         <div class="card-body">
             <h5>@(_isEditing ? "Edit Client" : "New Client")</h5>
             <EditForm Model="_model" OnValidSubmit="SaveClient">
@@ -29,6 +30,32 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Save</button>
                 <button type="button" class="btn btn-secondary" @onclick="() => _showForm = false">Cancel</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (_showUserForm)
+{
+    <div class="card mb-4 border-info">
+        <div class="card-body">
+            <h5>Create User Account for @_selectedClientName</h5>
+            <p class="text-muted small">This will create a permanent login for the client.</p>
+            @if (!string.IsNullOrEmpty(_userError))
+            {
+                <div class="alert alert-danger">@_userError</div>
+            }
+            <EditForm Model="_userModel" OnValidSubmit="SaveClientUser">
+                <div class="mb-2">
+                    <label>Login Email</label>
+                    <InputText @bind-Value="_userModel.Email" class="form-control" required type="email" />
+                </div>
+                <div class="mb-2">
+                    <label>Password</label>
+                    <InputText @bind-Value="_userModel.Password" class="form-control" required type="password" />
+                </div>
+                <button type="submit" class="btn btn-info">Create User</button>
+                <button type="button" class="btn btn-secondary" @onclick="() => _showUserForm = false">Cancel</button>
             </EditForm>
         </div>
     </div>
@@ -62,6 +89,7 @@
                     <td>@client.Phone</td>
                     <td>
                         <button class="btn btn-sm btn-info" @onclick="() => EditClient(client)">Edit</button>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => ShowCreateUserForm(client)">Create Account</button>
                         <button class="btn btn-sm btn-danger" @onclick="() => DeleteClient(client.Id)">Delete</button>
                     </td>
                 </tr>
@@ -75,6 +103,11 @@
     private bool _showForm;
     private bool _isEditing;
     private ClientModel _model = new();
+
+    private bool _showUserForm;
+    private ClientUserModel _userModel = new();
+    private string? _selectedClientName;
+    private string? _userError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -91,6 +124,7 @@
         _model = new ClientModel();
         _isEditing = false;
         _showForm = true;
+        _showUserForm = false;
     }
 
     private void EditClient(Client client)
@@ -98,6 +132,7 @@
         _model = new ClientModel { Id = client.Id, Name = client.Name, Email = client.Email, Phone = client.Phone };
         _isEditing = true;
         _showForm = true;
+        _showUserForm = false;
     }
 
     private async Task SaveClient()
@@ -114,6 +149,28 @@
         await LoadClients();
     }
 
+    private void ShowCreateUserForm(Client client)
+    {
+        _userModel = new ClientUserModel { ClientId = client.Id, Email = client.Email };
+        _selectedClientName = client.Name;
+        _showUserForm = true;
+        _showForm = false;
+        _userError = null;
+    }
+
+    private async Task SaveClientUser()
+    {
+        var (success, error) = await UserService.CreateClientUserAsync(_userModel.ClientId, _userModel.Email, _userModel.Password);
+        if (success)
+        {
+            _showUserForm = false;
+        }
+        else
+        {
+            _userError = error;
+        }
+    }
+
     private async Task DeleteClient(Guid id)
     {
         await ClientService.DeleteClientAsync(id);
@@ -126,5 +183,12 @@
         public string Name { get; set; } = "";
         public string Email { get; set; } = "";
         public string? Phone { get; set; }
+    }
+
+    public class ClientUserModel
+    {
+        public Guid ClientId { get; set; }
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
     }
 }

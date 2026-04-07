@@ -3,6 +3,7 @@ namespace ClientDocumentPortal.Domain.Entities;
 public class Tenant : BaseEntity
 {
     public string Name { get; set; } = default!;
+    public string UrlSlug { get; set; } = default!;
     public string? Description { get; set; }
     public string? LogoUrl { get; set; }
     public bool IsActive { get; set; } = true;

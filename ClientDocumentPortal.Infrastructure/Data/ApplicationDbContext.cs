@@ -8,11 +8,12 @@ namespace ClientDocumentPortal.Infrastructure.Data;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
 {
-    private readonly Guid? _currentTenantId;
+    private readonly ITenantProvider _tenantProvider;
+    private Guid? CurrentTenantId => _tenantProvider.GetTenantId();
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, ITenantProvider tenantProvider) : base(options)
     {
-         _currentTenantId = tenantProvider.GetTenantId();
+         _tenantProvider = tenantProvider;
     }
 
     public DbSet<Tenant> Tenants { get; set; } = default!;
@@ -26,7 +27,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         base.OnModelCreating(builder);
 
         // Configure UUID mapping if needed (Npgsql does it by default mostly)
-        builder.HasPostgresExtension("uuid-ossp");
+        // Unique Slug
+        builder.Entity<Tenant>()
+            .HasIndex(t => t.UrlSlug)
+            .IsUnique();
 
         // Identity table names to snake_case equivalent or just leave default and let the naming convention take over
         
@@ -34,10 +38,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<Tenant>().HasQueryFilter(e => !e.IsDeleted);
         builder.Entity<ApplicationUser>().HasQueryFilter(e => !e.Tenant.IsDeleted);
 
-        builder.Entity<Client>().HasQueryFilter(e => !e.IsDeleted && (!_currentTenantId.HasValue || e.TenantId == _currentTenantId));
-        builder.Entity<DocumentRequest>().HasQueryFilter(e => !e.IsDeleted && (!_currentTenantId.HasValue || e.TenantId == _currentTenantId));
-        builder.Entity<DocumentItem>().HasQueryFilter(e => !e.IsDeleted && (!_currentTenantId.HasValue || e.TenantId == _currentTenantId));
-        builder.Entity<ActivityLog>().HasQueryFilter(e => !e.IsDeleted && (!_currentTenantId.HasValue || e.TenantId == _currentTenantId));
+        builder.Entity<Client>().HasQueryFilter(e => !e.IsDeleted && (!CurrentTenantId.HasValue || e.TenantId == CurrentTenantId));
+        builder.Entity<DocumentRequest>().HasQueryFilter(e => !e.IsDeleted && (!CurrentTenantId.HasValue || e.TenantId == CurrentTenantId));
+        builder.Entity<DocumentItem>().HasQueryFilter(e => !e.IsDeleted && (!CurrentTenantId.HasValue || e.TenantId == CurrentTenantId));
+        builder.Entity<ActivityLog>().HasQueryFilter(e => !e.IsDeleted && (!CurrentTenantId.HasValue || e.TenantId == CurrentTenantId));
 
         // Relationships
         builder.Entity<Tenant>()

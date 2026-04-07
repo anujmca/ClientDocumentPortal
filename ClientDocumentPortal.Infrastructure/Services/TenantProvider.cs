@@ -15,4 +15,7 @@ public class TenantProvider : ITenantProvider
     {
         _tenantId = tenantId;
     }
+
+    public Task<Guid?> GetTenantIdBySlugAsync(string slug) => Task.FromResult<Guid?>(null);
+    public string? GetCurrentTenantSlug() => null;
 }

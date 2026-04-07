@@ -15,4 +15,8 @@ public class ApplicationUser : IdentityUser<Guid>
     // Tenant reference
     public Guid TenantId { get; set; }
     public virtual Tenant Tenant { get; set; } = default!;
+
+    // Optional Client reference (for client users)
+    public Guid? ClientId { get; set; }
+    public virtual Client? Client { get; set; }
 }

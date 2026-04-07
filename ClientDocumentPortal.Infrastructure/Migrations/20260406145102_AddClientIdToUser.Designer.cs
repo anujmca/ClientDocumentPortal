@@ -3,6 +3,7 @@ using System;
 using ClientDocumentPortal.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,15 +12,18 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ClientDocumentPortal.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260406145102_AddClientIdToUser")]
+    partial class AddClientIdToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "8.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "uuid-ossp");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("ClientDocumentPortal.Domain.Entities.ActivityLog", b =>
@@ -421,17 +425,8 @@ namespace ClientDocumentPortal.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
-                    b.Property<string>("UrlSlug")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("url_slug");
-
                     b.HasKey("Id")
                         .HasName("pk_tenant");
-
-                    b.HasIndex("UrlSlug")
-                        .IsUnique()
-                        .HasDatabaseName("ix_tenant_url_slug");
 
                     b.ToTable("tenant", (string)null);
                 });

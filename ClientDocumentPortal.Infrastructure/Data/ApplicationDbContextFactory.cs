@@ -19,5 +19,7 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
     {
         public Guid? GetTenantId() => null;
         public void SetTenantId(Guid tenantId) { }
+        public Task<Guid?> GetTenantIdBySlugAsync(string slug) => Task.FromResult<Guid?>(null);
+        public string? GetCurrentTenantSlug() => null;
     }
 }

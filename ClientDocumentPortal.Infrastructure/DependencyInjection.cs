@@ -20,6 +20,8 @@ public static class DependencyInjection
 
         services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddRoles<IdentityRole<Guid>>()
+            .AddClaimsPrincipalFactory<TenantClaimsPrincipalFactory>()
             .AddDefaultTokenProviders();
 
         // AWS S3 / R2 Configuration
@@ -36,6 +38,7 @@ public static class DependencyInjection
         
         services.AddScoped<IClientService, ClientService>();
         services.AddScoped<IDocumentRequestService, DocumentRequestService>();
+        services.AddScoped<IUserService, UserService>();
         
         services.AddHostedService<ReminderBackgroundService>();
 

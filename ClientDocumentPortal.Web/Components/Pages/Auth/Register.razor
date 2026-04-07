@@ -1,0 +1,118 @@
+@page "/register"
+@using ClientDocumentPortal.Application.Interfaces
+@inject IUserService UserService
+@inject NavigationManager NavigationManager
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Register Your Business</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Start collecting documents securely today.</p>
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="alert alert-danger">@_errorMessage</div>
+                    }
+
+                    @if (_isSuccess)
+                    {
+                        <div class="alert alert-success">
+                            Registration successful! <a href="login" class="alert-link">Click here to login</a>.
+                        </div>
+                    }
+                    else
+                    {
+                        <EditForm Model="Model" OnValidSubmit="RegisterUser" FormName="RegisterForm">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="text-danger" />
+
+                            <div class="mb-3">
+                                <label class="form-label">Business Name</label>
+                                <InputText @bind-Value="Model.BusinessName" class="form-control" placeholder="e.g. Acme CPAs" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Admin Email</label>
+                                <InputText @bind-Value="Model.Email" class="form-control" placeholder="admin@example.com" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <InputText @bind-Value="Model.Password" type="password" class="form-control" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Confirm Password</label>
+                                <InputText @bind-Value="Model.ConfirmPassword" type="password" class="form-control" />
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg" disabled="@_isProcessing">
+                                    @if (_isProcessing)
+                                    {
+                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        <span> Registering...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Create Account</span>
+                                    }
+                                </button>
+                            </div>
+                        </EditForm>
+                    }
+                </div>
+                <div class="card-footer text-center">
+                    <div class="mt-3">Already have an account? <a href="login">Login here</a>!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    public RegisterViewModel Model { get; set; } = new();
+
+    private string? _errorMessage;
+    private bool _isProcessing;
+    private bool _isSuccess;
+
+    private async Task RegisterUser()
+    {
+        if (Model.Password != Model.ConfirmPassword)
+        {
+            _errorMessage = "Passwords do not match.";
+            return;
+        }
+
+        _isProcessing = true;
+        _errorMessage = null;
+
+        var generatedSlug = new string(Model.BusinessName.ToLowerInvariant().Where(c => char.IsLetterOrDigit(c)).ToArray());
+        var (success, error) = await UserService.RegisterTenantAsync(Model.BusinessName, generatedSlug, Model.Email, Model.Password);
+
+        if (success)
+        {
+            _isSuccess = true;
+        }
+        else
+        {
+            _errorMessage = error;
+        }
+
+        _isProcessing = false;
+    }
+
+    public class RegisterViewModel
+    {
+        public string BusinessName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
+        public string ConfirmPassword { get; set; } = "";
+    }
+}
